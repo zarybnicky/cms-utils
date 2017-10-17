@@ -1,0 +1,13 @@
+<div .row>
+    <div .col-xs-12>
+        $maybe r <- can (crudBaseR (IndexR unit)) "GET"
+            <a href=@{r}>
+                <span .glyphicon .glyphicon-arrow-left>
+                _{crudMsgBack}
+<div .page-header>
+    <h1>_{crudMsgNew}
+<div .row>
+    <div .col-sm-12 .col-md-9>
+        $maybe r <- can (crudBaseR (AddR unit)) "POST"
+            <form role=form method=POST action=@{r} enctype=#{enctype}>
+                ^{fWidget}

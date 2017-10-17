@@ -1,0 +1,12 @@
+<div .page-header>
+  <h1>_{crudMsgIndex}
+  $maybe r <- can (crudBaseR (AddR unit)) "GET"
+    <a .btn .btn-primary .btn-xs href=@{r}>
+      <span .glyphicon .glyphicon-plus>
+      _{crudMsgNew}
+<div .row>
+  <div .col-xs-12>
+    $if null entities
+      <p .alert .alert-info>_{crudMsgNoEntities}
+    $else
+      ^{crudIndexWidget entities}

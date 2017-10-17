@@ -1,0 +1,20 @@
+<div .row>
+  <div .col-xs-12>
+    $maybe r <- can (crudBaseR (IndexR unit)) "GET"
+      <a href=@{r}>
+        <span .glyphicon .glyphicon-arrow-left>
+        _{crudMsgBack}
+<div .page-header>
+  <h1>_{crudMsgEdit}
+  $maybe r <- can (crudBaseR (EditR eid)) "DELETE"
+    <form .form-inline .display-inline method=POST action=@{r}>
+      <input name="_method" type="hidden" value="DELETE" />
+      <button .btn .btn-danger type=submit>
+        <span .glyphicon .glyphicon-remove>
+        _{crudMsgDelete}
+<div .row>
+  <div .col-sm-12 .col-md-9>
+    $maybe r <- can (crudBaseR (EditR eid)) "PATCH"
+        <form role=form method=POST action=@{r} enctype=#{enctype}>
+          <input name="_method" type="hidden" value="PATCH" />
+          ^{fWidget}
