@@ -13,10 +13,10 @@
 module Cms.Crud where
 
 import ClassyPrelude.Yesod hiding (get, (<>))
-import Cms.ActionLog.Class
-import Cms.Class
-import Cms.Crud.Route
-import Cms.Roles.Class
+import Cms.ActionLog.Class (logMsg)
+import Cms.Class (adminLayout)
+import Cms.Crud.Route (EditParent, ViewParent, CrudHandler(..), PersistCrudEntity, CrudRoute(..), CrudForm)
+import Cms.Roles.Class (getCan)
 import Colonnade (Colonnade)
 import Data.Default (def)
 import Data.Monoid ((<>))
@@ -35,7 +35,7 @@ data SimpleCrud app p c = SimpleCrud
   , scView         :: Key c -> HandlerT app IO Html
   , scEdit         :: WidgetT app IO () -> HandlerT app IO Html
   , scDelete       :: WidgetT app IO () -> HandlerT app IO Html
-  , scDeleteForm   :: WidgetT app IO () 
+  , scDeleteForm   :: WidgetT app IO ()
   , scForm         :: Either p c -> Html -> MForm (HandlerT app IO) (FormResult c, WidgetT app IO ())
   , scFormWrap     :: Enctype -> Route app -> WidgetT app IO () -> WidgetT app IO ()
   , scDeleteDb     :: Key c -> YesodDB app p
@@ -47,63 +47,57 @@ data SimpleCrud app p c = SimpleCrud
   , scPromoteRoute :: CrudRoute p c -> Route app
   }
 
-data SimplerCrud app a m = SimplerCrud
-  { crudBaseR :: CrudRoute () a -> Route app
-  , crudForm :: Maybe a -> UTCTime -> CrudForm app a
-  , crudIndexWidget :: [(Entity a, Maybe Text)] -> Html
-  , crudMsgIndex :: m
-  , crudMsgNew :: m
-  , crudMsgEdit :: m
-  , crudMsgBack :: m
-  , crudMsgDelete :: m
-  , crudMsgNoEntities :: m
-  , crudMsgCreated :: a -> m
-  , crudMsgUpdated :: a -> m
-  , crudMsgDeleted :: a -> m
-  , crudInsertQuery :: a -> YesodDB app (Key a)
-  , crudUpdateQuery :: Key a -> a -> YesodDB app ()
-  , crudDeleteQuery :: Key a -> YesodDB app ()
+data SimplerCrud app a s = SimplerCrud
+  { crudSimplerForm :: Maybe a -> UTCTime -> CrudForm app a
+  , crudSimplerTable :: [(s, Maybe Text)] -> Html
+  , crudSimplerDb :: CrudDb app () a s
+  , crudSimplerMsg :: CrudMessages app a
   }
 
-emptySimplerCrud
-  :: (PersistCrudEntity app a m)
-  => (CrudRoute () a -> Route app) -> SimplerCrud app a m
-emptySimplerCrud r = SimplerCrud
-  r
-  (const . const . const $ return (FormMissing, mempty))
-  (const mempty)
-  (error "Please define your CRUD messages")
-  (error "Please define your CRUD messages")
-  (error "Please define your CRUD messages")
-  (error "Please define your CRUD messages")
-  (error "Please define your CRUD messages")
-  (error "Please define your CRUD messages")
-  (const (error "Please define your CRUD messages"))
-  (const (error "Please define your CRUD messages"))
-  (const (error "Please define your CRUD messages"))
-  insert
-  replace
-  delete
+data CrudMessages app a = CrudMessages
+  { crudMsgIndex :: SomeMessage app
+  , crudMsgNew :: SomeMessage app
+  , crudMsgEdit :: SomeMessage app
+  , crudMsgBack :: SomeMessage app
+  , crudMsgDelete :: SomeMessage app
+  , crudMsgNoEntities :: SomeMessage app
+  , crudMsgCreated :: a -> SomeMessage app
+  , crudMsgUpdated :: a -> SomeMessage app
+  , crudMsgDeleted :: a -> SomeMessage app
+  }
+
+data CrudDb app p c s = CrudDb
+  { crudDbSelect :: p -> YesodDB app [s]
+  , crudDbSelectKey :: s -> Key c
+  , crudDbAdd :: p -> c -> YesodDB app (Key c)
+  , crudDbEdit :: Key c -> c -> YesodDB app p
+  , crudDbDelete :: Key c -> YesodDB app p
+  }
+
+defaultCrudDb
+  :: PersistCrudEntity app a
+  => CrudDb app () a (Entity a)
+defaultCrudDb =
+  CrudDb (const $ selectList [] []) entityKey (const insert) replace delete
 
 simplerCrudToHandler
-  :: PersistCrudEntity app a m
-  => SimplerCrud app a m -> CrudHandler app () a
-simplerCrudToHandler SimplerCrud {..} = CrudHandler
+  :: PersistCrudEntity app a
+  => SimplerCrud app a s -> (CrudRoute () a -> Route app) -> CrudHandler app () a
+simplerCrudToHandler SimplerCrud {..} crudBaseR = CrudHandler
   { chIndex = \_ -> do
+      let crudIndexWidget = crudSimplerTable
       can <- getCan
       render <- getUrlRenderParams
       entities <-
         fmap
-        (fmap
-          (\x@(Entity key _) ->
-             (x, flip render [] <$> can (crudBaseR (EditR key)) "GET")))
-        (runDB $ selectList [] [])
+        (fmap (id &&& fmap (`render` []) . flip can "GET" . crudBaseR . EditR . crudDbSelectKey))
+        (runDB $ crudDbSelect ())
       adminLayout $ do
         setTitleI crudMsgIndex
         $(widgetFileNoReload def "index")
   , chAdd = \_ -> do
       ct <- liftIO getCurrentTime
-      ((results, fWidget), enctype) <- runFormPost $ crudForm Nothing ct
+      ((results, fWidget), enctype) <- runFormPost $ crudSimplerForm Nothing ct
       case results of
         FormSuccess x -> do
           _ <- runDB $ insert x
@@ -118,7 +112,7 @@ simplerCrudToHandler SimplerCrud {..} = CrudHandler
   , chEdit = \eid -> do
       e <- runDB $ get404 eid
       ct <- liftIO getCurrentTime
-      ((results, fWidget), enctype) <- runFormPost $ crudForm (Just e) ct
+      ((results, fWidget), enctype) <- runFormPost $ crudSimplerForm (Just e) ct
       case results of
         FormSuccess new -> do
           runDB $ replace eid new
@@ -138,6 +132,9 @@ simplerCrudToHandler SimplerCrud {..} = CrudHandler
       redirect $ crudBaseR (IndexR ())
   , chView = const (return mempty)
   }
+  where
+    CrudMessages {..} = crudSimplerMsg
+    CrudDb {..} = crudSimplerDb
 
 encodeClickableTable
   :: (Functor h, Foldable f, Foldable h)

@@ -15,13 +15,12 @@ import Control.Monad.Trans.State (StateT, evalStateT, get, put)
 
 type CrudForm app a = Html -> MForm (HandlerT app IO) (FormResult a, WidgetT app IO ())
 
-type PersistCrudEntity app a m =
+type PersistCrudEntity app a =
   ( PathPiece (Key a)
   , Yesod app
   , YesodPersist app
   , YesodPersistBackend app ~ SqlBackend
   , PersistRecordBackend a SqlBackend
-  , RenderMessage app m
   , RenderMessage app FormMessage
   , Cms app
   , CmsActionLog app

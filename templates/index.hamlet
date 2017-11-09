@@ -1,12 +1,13 @@
-<div .page-header>
-  <h1>_{crudMsgIndex}
-  $maybe r <- can (crudBaseR (AddR unit)) "GET"
-    <a .btn .btn-primary .btn-xs href=@{r}>
-      <span .glyphicon .glyphicon-plus>
-      _{crudMsgNew}
-<div .row>
-  <div .col-xs-12>
+<div .box>
+  <div .box-header.with-border>
+    <h3 .box-title>_{crudMsgIndex}
+    $maybe r <- can (crudBaseR (AddR unit)) "GET"
+      <div .box-tools>
+        <a .btn.btn-primary href=@{r}>
+          <span .glyphicon.glyphicon-plus>
+          _{crudMsgNew}
+  <div .box-body>
     $if null entities
-      <p .alert .alert-info>_{crudMsgNoEntities}
+      <div .alert .alert-info>_{crudMsgNoEntities}
     $else
       ^{crudIndexWidget entities}
