@@ -17,7 +17,7 @@ import Cms.ActionLog.Class (logMsg)
 import Cms.Class (adminLayout)
 import Cms.Crud.Route (EditParent, ViewParent, CrudHandler(..), PersistCrudEntity, CrudRoute(..), CrudForm)
 import Cms.Roles.Class (getCan)
-import Colonnade (Colonnade)
+import Colonnade (Colonnade, Headedness)
 import Data.Default (def)
 import Data.Monoid ((<>))
 import Text.Blaze (toValue)
@@ -137,14 +137,14 @@ simplerCrudToHandler SimplerCrud {..} crudBaseR = CrudHandler
     CrudDb {..} = crudSimplerDb
 
 encodeClickableTable
-  :: (Functor h, Foldable f, Foldable h)
+  :: (Applicative h, Headedness h, Foldable f, Foldable h)
   => Colonnade h (a, Maybe Text) Html
   -> f (a, Maybe Text)
   -> Html
 encodeClickableTable t =
   (H.div H.! HA.class_ "table-responsive") .
   encodeTable
-    (Just (mempty, mempty))
+    (pure (mempty, mempty))
     mempty
     onclick
     id
