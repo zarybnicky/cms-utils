@@ -2,7 +2,7 @@
 
 module Cms.Mailer.Class where
 
-import ClassyPrelude.Yesod (HandlerT, liftIO, mapMaybe, isJust)
+import ClassyPrelude.Yesod (HandlerFor, liftIO, mapMaybe, isJust)
 import qualified Data.ByteString.Lazy.Char8 as BC
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -11,7 +11,7 @@ import Data.Monoid ((<>))
 import Network.Mail.Mime (Mail(..), Part(..), Address(..))
 
 class CmsMailer app where
-  sendMail :: Mail -> HandlerT app IO ()
+  sendMail :: Mail -> HandlerFor app ()
   sendMail (Mail from tos ccs bccs headers parts) =
     liftIO . T.putStrLn $
     T.unlines

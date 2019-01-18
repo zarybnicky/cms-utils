@@ -13,7 +13,7 @@ import Cms.ActionLog.Class (CmsActionLog)
 import Cms.Roles.Class (CmsRoles)
 import Control.Monad.Trans.State (StateT, evalStateT, get, put)
 
-type CrudForm app a = Html -> MForm (HandlerT app IO) (FormResult a, WidgetT app IO ())
+type CrudForm app a = Html -> MForm (HandlerFor app) (FormResult a, WidgetFor app ())
 
 type PersistCrudEntity app a =
   ( PathPiece (Key a)
@@ -28,14 +28,14 @@ type PersistCrudEntity app a =
   )
 
 data CrudHandler site p c = CrudHandler
-  { chAdd :: p -> HandlerT site IO Html
-  , chIndex :: p -> HandlerT site IO Html
-  , chEdit :: Key c -> HandlerT site IO Html
-  , chDelete :: Key c -> HandlerT site IO Html
-  , chView :: Key c -> HandlerT site IO Html
+  { chAdd :: p -> HandlerFor site Html
+  , chIndex :: p -> HandlerFor site Html
+  , chEdit :: Key c -> HandlerFor site Html
+  , chDelete :: Key c -> HandlerFor site Html
+  , chView :: Key c -> HandlerFor site Html
   }
 
-handleCrud :: CrudHandler site p c -> CrudRoute p c -> HandlerT site IO Html
+handleCrud :: CrudHandler site p c -> CrudRoute p c -> HandlerFor site Html
 handleCrud (CrudHandler h _ _ _ _) (AddR p) = h p
 handleCrud (CrudHandler _ h _ _ _) (IndexR p) = h p
 handleCrud (CrudHandler _ _ h _ _) (EditR p) = h p

@@ -30,14 +30,14 @@ unit :: ()
 unit = ()
 
 data SimpleCrud app p c = SimpleCrud
-  { scAdd          :: WidgetT app IO () -> HandlerT app IO Html
-  , scIndex        :: p -> HandlerT app IO Html
-  , scView         :: Key c -> HandlerT app IO Html
-  , scEdit         :: WidgetT app IO () -> HandlerT app IO Html
-  , scDelete       :: WidgetT app IO () -> HandlerT app IO Html
-  , scDeleteForm   :: WidgetT app IO ()
-  , scForm         :: Either p c -> Html -> MForm (HandlerT app IO) (FormResult c, WidgetT app IO ())
-  , scFormWrap     :: Enctype -> Route app -> WidgetT app IO () -> WidgetT app IO ()
+  { scAdd          :: WidgetFor app () -> HandlerFor app Html
+  , scIndex        :: p -> HandlerFor app Html
+  , scView         :: Key c -> HandlerFor app Html
+  , scEdit         :: WidgetFor app () -> HandlerFor app Html
+  , scDelete       :: WidgetFor app () -> HandlerFor app Html
+  , scDeleteForm   :: WidgetFor app ()
+  , scForm         :: Either p c -> Html -> MForm (HandlerFor app) (FormResult c, WidgetFor app ())
+  , scFormWrap     :: Enctype -> Route app -> WidgetFor app () -> WidgetFor app ()
   , scDeleteDb     :: Key c -> YesodDB app p
   , scAddDb        :: p -> c -> YesodDB app (Key c)
   , scEditDb       :: Key c -> c -> YesodDB app p
@@ -107,7 +107,7 @@ simplerCrudToHandler SimplerCrud {..} crudBaseR = CrudHandler
         _ -> do
           can <- getCan
           adminLayout $ do
-            setTitleI $ crudMsgNew
+            setTitleI crudMsgNew
             $(widgetFileNoReload def "new")
   , chEdit = \eid -> do
       e <- runDB $ get404 eid

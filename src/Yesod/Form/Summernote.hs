@@ -14,7 +14,8 @@ import Data.Text (Text, pack)
 import Text.Blaze.Html.Renderer.String (renderHtml)
 import Text.Hamlet (shamlet, Html)
 import Text.Julius (julius, rawJS)
-import Yesod.Core (Yesod, HandlerT, Route, addScriptEither, addStylesheetEither, toWidget, getYesod, preEscapedToMarkup)
+import Yesod.Core (Yesod, HandlerFor, Route, addScriptEither,
+                   addStylesheetEither, toWidget, getYesod, preEscapedToMarkup)
 import Yesod.Form (Field(..), Enctype(UrlEncoded))
 
 class Yesod a => YesodSummernote a where
@@ -23,9 +24,7 @@ class Yesod a => YesodSummernote a where
     summernoteLoadLibrariesAndCss :: a -> Bool
     summernoteLoadLibrariesAndCss _ = False
 
-snHtmlFieldCustomized
-  :: (YesodSummernote site, Monad m)
-  => String -> Field (HandlerT site m) Html
+snHtmlFieldCustomized :: YesodSummernote site => String -> Field (HandlerFor site) Html
 snHtmlFieldCustomized cfg = Field
     { fieldParse =
         \e _ -> return $
@@ -36,10 +35,10 @@ $newline never
 <textarea id="#{theId}" *{attrs} name="#{name}" .html>#{showVal val}
 |]
         master <- getYesod
-        (when (summernoteLoadLibrariesAndCss master) $ do
+        when (summernoteLoadLibrariesAndCss master) $ do
             addStylesheetEither (urlSummernoteCss master)
-            addScriptEither     (urlSummernoteScript master))
-        toWidget $ [julius|
+            addScriptEither (urlSummernoteScript master)
+        toWidget [julius|
 $(document).ready(function(){
   var input = document.getElementById("#{rawJS theId}");
   $(input).summernote(#{rawJS cfg}).on('summernote.change',function(){
@@ -51,6 +50,5 @@ $(document).ready(function(){
   where
     showVal = either id (pack . renderHtml)
 
-snHtmlField :: (YesodSummernote site, Monad m)
-            => Field (HandlerT site m) Html
+snHtmlField :: YesodSummernote site => Field (HandlerFor site) Html
 snHtmlField = snHtmlFieldCustomized ""

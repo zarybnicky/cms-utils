@@ -18,7 +18,7 @@ class ( Yesod app
       , YesodAuthPersist app
       , YesodPersistBackend app ~ SqlBackend
       ) => Cms app where
-  adminLayout :: WidgetT app IO () -> HandlerT app IO Html
+  adminLayout :: WidgetFor app () -> HandlerFor app Html
   adminMenu :: [AdminMenuItem app]
 
   -- | A list of languages to render.

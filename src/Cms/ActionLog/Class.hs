@@ -9,4 +9,4 @@ import ClassyPrelude.Yesod
 
 class Yesod app => CmsActionLog app where
   data Log app :: *
-  logMsg :: RenderMessage app m => m -> HandlerT app IO ()
+  logMsg :: RenderMessage app m => m -> HandlerFor app ()

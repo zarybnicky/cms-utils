@@ -20,11 +20,11 @@ class ( YesodAuth app
       , Ord (Roles app)
       ) => CmsRoles app where
   type Roles app
-  getUserRoles :: AuthId app -> HandlerT app IO (Set (Roles app))
-  setUserRoles :: AuthId app -> Set (Roles app) -> HandlerT app IO ()
-  mayAssignRoles :: HandlerT app IO Bool
+  getUserRoles :: AuthId app -> HandlerFor app (Set (Roles app))
+  setUserRoles :: AuthId app -> Set (Roles app) -> HandlerFor app ()
+  mayAssignRoles :: HandlerFor app Bool
 
-  defaultRoles :: HandlerT app IO (Set (Roles app))
+  defaultRoles :: HandlerFor app (Set (Roles app))
   defaultRoles = return S.empty
 
   actionAllowedFor :: Route app -> ByteString -> Allow (Set (Roles app))
@@ -58,7 +58,7 @@ canFor m murs theRoute method' =
 
 getCan
   :: CmsRoles app
-  => HandlerT app IO (Route app -> ByteString -> Maybe (Route app))
+  => HandlerFor app (Route app -> ByteString -> Maybe (Route app))
 getCan = do
   mauthId <- maybeAuthId
   canFor <$> getYesod <*> mapM getUserRoles mauthId
