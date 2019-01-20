@@ -1,3 +1,2 @@
-let
-  pkgs = import ./nix {};
-in pkgs.haskellPackages.cms-utils
+with import ./nix {};
+haskellPackages.callCabal2nix "cms-utils" ./. {}

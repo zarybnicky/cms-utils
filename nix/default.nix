@@ -1,5 +1,5 @@
-{ nixpkgs ? (import ./fetch.nix).nixpkgs }:
+{ fetch ? import ./fetch.nix, nixpkgs ? fetch.nixpkgs }:
 
 import nixpkgs {
-  overlays = [ (import ./overlay.nix) ];
+  overlays = [ (import ./overlay.nix fetch) ];
 }
